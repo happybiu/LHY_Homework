@@ -4,7 +4,7 @@
   - [numpy](#numpy)
     - [介绍](#介绍)
     - [ndarray的属性](#ndarray的属性)
-    - [ndarray的类型](#ndarray的类型)
+    - [ndarray的数据类型](#ndarray的数据类型)
     - [基本操作](#基本操作)
       - [创建ndarray：](#创建ndarray)
       - [range & np.arange & np.linspce](#range--nparange--nplinspce)
@@ -57,6 +57,10 @@
     - [模型评估](#模型评估)
       - [交叉验证](#交叉验证)
     - [保存和加载模型：joblib](#保存和加载模型joblib)
+  - [os 模块](#os-模块)
+  - [cv2 模块](#cv2-模块)
+  - [PIL Image对象](#pil-image对象)
+    - [Image.open()和cv2.imread()的区别](#imageopen和cv2imread的区别)
   - [机器学习完整例子示范](#机器学习完整例子示范)
     - [步骤](#步骤)
     - [解释说明](#解释说明)
@@ -65,6 +69,7 @@
     - [历史发展](#历史发展)
     - [Tensorflow & Pytorch & keras的比较](#tensorflow--pytorch--keras的比较)
     - [查看pytorch版本](#查看pytorch版本)
+    - [官方文档/官方手册](#官方文档官方手册)
     - [Tensor 张量](#tensor-张量)
       - [Tensor(张量)创建](#tensor张量创建)
       - [获取tensor的size](#获取tensor的size)
@@ -83,8 +88,6 @@
     - [数据加载与预处理](#数据加载与预处理)
       - [Dataset](#dataset)
       - [torchvision](#torchvision)
-        - [torchvision.transforms模块对PIL Image对象的常见操作](#torchvisiontransforms模块对pil-image对象的常见操作)
-      - [torchvision.transforms模块对Tensor对象的常见操作](#torchvisiontransforms模块对tensor对象的常见操作)
       - [torch.utils.data.DataLoader](#torchutilsdatadataloader)
     - [torch.nn 神经网络](#torchnn-神经网络)
       - [神经网络的典型训练过程](#神经网络的典型训练过程)
@@ -96,6 +99,8 @@
       - [损失函数](#损失函数)
       - [torch.optim 优化器：更新权重](#torchoptim-优化器更新权重)
       - [训练网络](#训练网络)
+      - [GPU加速：cuda](#gpu加速cuda)
+      - [验证](#验证)
     - [示例：训练一个图像分类器：CIFAR-10](#示例训练一个图像分类器cifar-10)
   - [math 模块](#math-模块)
   - [python语法](#python语法)
@@ -103,6 +108,17 @@
 - [Homework1: Regression](#homework1-regression)
   - [流程及注意事项](#流程及注意事项)
   - [Q&A](#qa-1)
+- [Homework2: Classification - Logistic Regrassion](#homework2-classification---logistic-regrassion)
+  - [流程及注意事项](#流程及注意事项-1)
+  - [我的遗漏考虑](#我的遗漏考虑)
+  - [Q&A](#qa-2)
+- [Homework2: Classification - Logistic Regrassion](#homework2-classification---logistic-regrassion-1)
+  - [流程及注意事项](#流程及注意事项-2)
+  - [Q&A](#qa-3)
+- [Homework3](#homework3)
+  - [Q&A](#qa-4)
+- [Homework4](#homework4)
+  - [gensim](#gensim)
 
 <!-- /TOC -->
 
@@ -142,7 +158,7 @@ print(type(a))                   # type of a
 print(a.size)                    # a里有多少个元素
 ```
 
-### ndarray的类型
+### ndarray的数据类型
 |名称|	描述|
 |--|--|--|
 |np.bool|	用一个字节存储的布尔类型（True或False）|
@@ -284,6 +300,7 @@ a % b | np.remainder(a, b)
 | * | np.multiply() | np.dot() |
 | -- | -- | -- |
 |数组ndarray：对应元素相乘，矩阵mat：矩阵相乘|数组ndarray和矩阵mat均是对应位置相乘|数组ndarray和矩阵mat均是矩阵相乘|
+- np.dot与np.matmul的区别: 1.二者都是矩阵乘法。2.np.matmul中禁止矩阵与标量的乘法。3.在矢量乘矢量的內积运算中，np.matmul与np.dot没有区别。4.np.matmul中，多维的矩阵，将前n-2维视为后2维的元素后，进行乘法运算。
 ```
 import numpy as np
 
@@ -333,8 +350,8 @@ print(a)
 |a.prod(axis=None)|求积|
 |a.min(axis=None)|最小值|
 |a.max(axis=None)|最大值|
-|a.argmin(axis=None)|最小值索引|
-|a.argmax(axis=None)|最大值索引|
+|a.argmin(axis=None)|最小值对应的索引|
+|a.argmax(axis=None)|最大值对应的索引|
 |a.ptp(axis=None)|最大值减最小值|
 |a.mean(axis=None)|平均值|
 |a.std(axis=None)|标准差|
@@ -356,7 +373,7 @@ mean()函数功能：求取均值
 经常操作的参数为axis，以m * n矩阵举例：
 axis 不设置值，对 m*n 个数求均值，返回一个实数
 axis = 0：压缩行，对各列求均值，返回 1* n 矩阵
-axis =1 ：压缩列，对各行求均值，返回 m *1 矩阵
+axis = 1 ：压缩列，对各行求均值，返回 m *1 矩阵
 
 
 
@@ -398,8 +415,7 @@ print(c)
 
 ### 其他操作
 - np.round(x,n):round() 方法返回浮点数x的四舍五入值。x表示数值，n表示四舍五入到小数点哪一位。n=-1表示个位，n=0表示小数点第一位
-
-
+- np.abs()  绝对值
 
 ### IO操作
 #### 写入
@@ -829,6 +845,27 @@ model = joblib.load('MyModel.pkl')                 # 加载模型
 print(model)
 ```
 
+## os 模块
+- os.listdir() 方法用于返回指定的文件夹包含的文件或文件夹的名字的列表
+- os.path.join(path1, path2) 路径拼接合并
+
+## cv2 模块
+- cv2.imread()返回np.array类型
+- cv2.resize(InputArray src, OutputArray dst, Size, fx, fy, interpolation)
+
+## PIL Image对象
+- PIL(Python Image Library)是python的第三方图像处理库，但是由于其强大的功能与众多的使用人数，几乎已经被认为是python官方图像处理库了
+- Image类是PIL中的核心类
+```
+from PIL import Image             #调用库，包含图像类
+    im = Image.open("3d.jpg")     #文件存在的路径，如果没有路径就是当前目录下文件
+    im.show()
+```
+### Image.open()和cv2.imread()的区别
+- Image.open(）得到的img数据类型呢是Image对象，不是普通的数组。cv2.imread()得到的img数据类型是np.array()类型。
+- 具体可以看https://blog.csdn.net/weixin_42213622/article/details/109110140
+
+
 ## 机器学习完整例子示范
 ### 步骤
 - step 1. 获取及加载数据集
@@ -902,7 +939,12 @@ joblib.dump(estimator,'estimator.pkl')
 import torch as t
 print(t.__version__)
 ```
+
+### 官方文档/官方手册
+- https://pytorch.org/docs/master/torch.html
+
 ### Tensor 张量
+
 #### Tensor(张量)创建
 - 注意函数的参数的形式，与numpy似乎有些区别
 - ones & a.new_ones(5,3,dtype=t.float64): new_ones返回一个指定size全为1的tensor，并且默认和a有相同的t.dtype和t.device
@@ -963,6 +1005,7 @@ a % b | t.remainder(a, b)
 #### 改变tensor的维度和大小
 - torch.view()
 - torch.view与numpy.reshape类似
+- flatten：numpy.ndarray.flatten，返回一个一维数组。flatten只能适用于numpy对象，即array或者mat，普通的list列表不适用。a.flatten()：a是个多维数组，a.flatten()就是把a降到一维，默认是按行的方向降
 
 
 #### 获得数值
@@ -1034,6 +1077,7 @@ if t.cuda.is_available():
 
 
 #### autograd.Variable
+- pytorch0.4更新后Tensor和Variable合并:torch.Tensor 和torch.autograd.Variable现在是同一个类。torch.Tensor 能够像之前的Variable一样追踪历史和反向传播。Variable仍能够正常工作，但是返回的是Tensor。所以在0.4的代码中，不需要使用Variable了。
 - autograd.Variable是Autograd中的核心类，它简单封装了tensor，并支持几乎所有tensor的操作。Tensor在被封装为Variable之后，可以调动它的.backward实现反向传播，自动计算所有梯度
 - forward函数的输入和输出都是Variable，只有Variable才具有自动求导功能，Tensor是没有的，所以在输入时，需要把Tensor封装成Variable
 - Variable的数据结构，autograd.Variable中包含了data、grad、grad_fn。
@@ -1132,6 +1176,10 @@ with t.no_grad():
 
 
 ### 数据加载与预处理
+- Pytorch 读取数据虽然特别灵活，但是还是具有特定的流程的，它的操作顺序为：
+  - 创建一个 Dataset 对象，该对象如果现有的 Dataset 不能够满足需求，我们也可以自定义 Dataset`
+  - 创建一个 DataLoader 对象
+  - 不停的 循环 这个 DataLoader 对象
 - 一般情况下，处理图像、文本、音频和视频数据时，可以使用标准的python包来加载数据到一个numpy数组中，然后把这个数组转换成torch.*Tensor
 - 图像可以使用Pillow, Opencv
 - 音频可以使用scipy，librosa
@@ -1141,30 +1189,148 @@ with t.no_grad():
 
 #### Dataset
 - Dataset对象是一个数据集，可以按下标访问，返回形如(data,label)的数据
-- 
+- 创建一个 Dataset 对象，该对象如果现有的 Dataset 不能够满足需求，我们也可以自定义 Dataset，通过继承 torch.utils.data.Dataset。在继承的时候，需要 override 三个方法。
+    - `__init__`： 用来初始化数据集，定义一个类必须写构造函数。为什么自定义Dataset的init函数不需要继承父类Dataset的__init__()函数？
+    - `__getitem__`：给定索引值，返回该索引值对应的数据；它是python built-in方法，其主要作用是能让该类可以像list一样通过索引值对数据进行访问。返回一条数据或一个样本。`obj[index]`等价于`obj.__getitem__(index)`。注意，getitem应该分两种情况，如果是训练数据或是验证数据，就返回data,label。如果是测试数据，就返回data。
+    - `__len__`：用于len(Dataset)时能够返回大小，返回样本的数量，`len(obj)`等价于`obj.__len__()`
+- dataset中返回的数据类型有规定吗？array？tensor？图像数据是tensor，transform中读取数据后，转换成tensor。至于label，应该是int吧？
+```
+class MyDataset(torch.utils.data.Dataset):      # 需要继承dataset
+    def __init__(self):
+        # TODO
+        # 1. Initialize file path or list of file names.
+        pass
+    def __getitem__(self, index):
+        # TODO
+        # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
+        # 2. Preprocess the data (e.g. torchvision.Transform).
+        # 3. Return a data pair (e.g. image and label).
+        #这里需要注意的是，第一步：read one data，是一个data
+        pass
+    def __len__(self):
+        # You should change 0 to the total size of your dataset.
+        return 0
+```
+
+```
+from torch.utils.data import Dataset, DataLoader
+import os
+from PIL import Image
+import numpy as np
+import torch as t
+class MyDataset(Dataset):
+    def __init__(self, root):
+        # 将所有图片的绝对路径存在self.imgs_path列表中
+        # 这里不实际加载图片，只是指定路径
+        # 当调用__getitem__时才会真正读照片
+        # 不需要继承dataset的构造函数？
+        imgs = os.listdir(root)
+        # 下面的代码也可精简为 self.imgs_path = [os.path.join(root, img) for img in imgs]
+        self.imgs_path = []
+        for img in imgs:
+            self.imgs_path.append(os.path.join(root, img))
+    
+    def __getitem__(self, index):
+        img_path = self.imgs_path[index]
+        pil_image = Image.open(img_path)
+        array_image = np.asarray(pil_image)
+        tensor_image = t.from_numpy(array_image)
+        label = xxxxxxxxxx
+        return tensor_image,label
+
+    def __len__(self):
+        return len(self.imgs_path)
+```
+```
+class MyDataSet(Dataset):
+    def __init__(self, data, label):
+        self.data = data
+        self.label = label
+        self.length = data.shape[0]
+        
+    def __getitem__(self, mask):
+        label = self.label[mask]
+        data = self.data[mask]
+        return label, data
+
+    def __len__(self):
+        return self.length
+```
 
 
 #### torchvision
-- torchvision是一个视觉工具包，提供了很多视觉图像处理的工具，其中transforms模块提供了对PIL Image对象和Tensor对象的常用操作
-- PIL Image对象可以再研究研究具体是啥
-
-
-##### torchvision.transforms模块对PIL Image对象的常见操作
-- Resize
-- 裁剪：CenterCrop中心裁剪、RandomCrop随机裁剪、RandomSizeCrop先将给定的PIL Image随机切，再resize成指定的大小
-- Pad
-- ToTensor:将PIL Image对象转成Tensor，会自动将[0, 255]归一化到[0, 1]
-
-
-#### torchvision.transforms模块对Tensor对象的常见操作
-- Normalize：标准化，即减均值，除以标准差
-- ToPILImage：将Tensor转为PIL Image对象
-
+- torchvision：自定义的Dataset后，有时候返回的数据可能还是不适合实际使用。例如，返回样本形状大小不一，这对需要取batch训练的神经网络来说很不友好。例如，返回的样本数值较大，未归一化至[-1,1]。针对上述问题，pytorch提供了torchvision。torchvision是一个视觉工具包，提供了很多视觉图像处理的工具，其中torchvision中transforms模块提供了对PIL Image对象和Tensor对象的常用操作
+- 对PIL Image对象的常见操作如下：
+  - Resize(transforms.Resize):
+  - CenterCrop、RandomCrop、RandomSizeCrop：裁剪图片。CenterCrop中心裁剪、RandomCrop随机裁剪、RandomSizeCrop先将给定的PIL Image随机切，再resize成指定的大小
+  - Pad：填充
+  - ToTensor：将PIL Image对象转成tensor，会自动将[0,255],归一化至[0,1]
+- 对Tensro的常见操作如下：
+  - Normalize：标准化，即减均值，除以标准差。ToTensor已经归一化至[0,1],T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),可以标准化至[-1,1]
+  - ToPILImage：将Tensor转换成PIL Image对象
+- 如果要对图片进行多个操作，可通过Compose将这些操作拼接起来，类似于nn.Sequential。
+```
+from torchvision import transforms as T
+transform = T.Compose([
+  T.Resize(224)                                       # 保持长宽比不变，最短边为224像素
+  T.CenterCrop(224)                                   # 从图片中间切出224*224的图片
+  T.ToTensor()                                        # 将图片从图片（Image）转成Tensor，并且归一化至[0,1]
+  T.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])     # 标准化至[-1,1]
+])
+```
 
 #### torch.utils.data.DataLoader
+- Dataset只负责数据的抽象，一次调用__getitem__只返回一个样本。在训练神经网络时，是对一个batch进行操作，同时还需要对数据进行shuffle和并行加速等。对此，Pytorch提供了DataLoader帮助我们实现这些功能
 - 实现功能：对一个batch的数据进行操作，对数据进行shuffle，并行加速
 - DataLoader是一个可迭代的对象，它将dataset返回的每一条数据样本拼接成一个batch，并提供多线程加速优化和数据打乱等操作。当程序对dataset的所有数据遍历完一遍之后，对DataLoader也完成了一次迭代
+- DataLoader 是 torch 给你用来包装你的数据的工具，所以你要将( numpy array 或其他) 数据形式装换成 Tensor, 然后再放进这个包装器中。 使用 DataLoader 帮助我们对数据进行有效地迭代处理。
+- DataLoader的函数定义如下：
+```
+torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=False, sampler=None, batch_sampler=None, num_workers=0, collate_fn=, pin_memory=False, drop_last=False, timeout=0, worker_init_fn=None)
+```
+- 常用参数解释：
+  - dataset (Dataset): 是一个 DataSet 对象，表示需要加载的数据集
+  - batch_size (int, optional): 每一个 batch 加载多少组样本，即指定 batch_size ，默认是 1
+  - shuffle (bool, optional): 布尔值 True 或者是 False ，表示每一个 epoch 之后是否对样本进行随机打乱，默认是 False
+  - sampler (Sampler, optional): 自定义从数据集中抽取样本的策略，如果指定这个参数，那么 shuffle 必须为 False
+  - batch_sampler (Sampler, optional): 与 sampler 类似，但是一次只返回一个 batch 的 indices（索引），需要注意的是，一旦指定了这个参数，那么 batch_size,shuffle,sampler,drop_last 就不能再制定了（互斥）
+  - num_workers (int, optional): 这个参数决定了有几个进程来处理 data loading 。0 意味着所有的数据都会被 load 进主进程，默认为0
+  - collate_fn (callable, optional): 将一个 list 的 sample 组成一个 mini-batch 的函数（这个还不是很懂）
+  - pin_memory (bool, optional): 如果设置为True，那么 data loader 将会在返回它们之前，将 tensors 拷贝到 CUDA 中的固定内存（CUDA pinned memory）中
+  - drop_last (bool, optional): 如果设置为 True：这个是对最后的未完成的 batch 来说的，比如 batch_size 设置为 64，而一个 epoch只有 100 个样本，那么训练的时候后面的 36 个就被扔掉了，如果为 False（默认），那么会继续正常执行，只是最后的 batch_size 会小一点。
+  - timeout (numeric, optional): 如果是正数，表明等待从 worker 进程中收集一个 batch 等待的时间，若超出设定的时间还没有收集到，那就不收集这个内容。这个 numeric 应总是大于等于0，默认为0。
 
+- DataLoader的函数定义如下：（怎么版本还不一样呢？哪个是最新版本，研究下）
+```
+DataLoader(dataset, batch_size=1, shuffle=False, sample=None, num_workers=0, collate_fn=default_collate, pin_momory=Flase, drop_last=False)
+```
+- dataset: 加载的数据集（Dataset对象）
+- batch_size: batch size 批大小
+- shuffle: 
+- sample：样本抽样
+- num_workers: 使用多进程加载的进程数，0代表不使用多进程
+- collate_fn: 如何将多个样本数据拼接成一个batch，一般使用默认的拼接方式即可
+- pin_memory: 是否将数据保存在pinmemory去，pin memory中的数据转到GPU会快一些
+- drop_last: dataset中的数据个数可能不是batchsize的整数倍，drop_last为True会将多出来不足一个batch的数据丢弃
+```
+from torch.utils.data import DataLoader
+dataloader = DataLoader(dataset, batch_size=3, shuffle=True,num_workers=0, drop_last=False)
+dataiter = iter(dataloader)
+imgs,labels = next(dataiter)
+```
+- iter() 函数用来生成迭代器。`iter(object[, sentinel])`。object: 支持迭代的集合对象
+- next() 返回迭代器的下一个项目。next() 函数要和生成迭代器的 iter() 函数一起使用。
+- dataloader是一个可迭代的对象，我们可以像使用迭代器一样使用它，例如：
+```
+for batch_datas, batch_labels in dataloader:
+    train()
+```
+或
+```
+dataiter = iter(dataloader)
+batch_datas, batch_labels = next(dataiter)
+```
+- DataLoader怎么版本还不一样呢？确实，目前上面的两个都不是最新版本，我查了官方文档，又增加了新的参数。目前我的水平，了解里面的几个重要参数就行了，后面的再慢慢学习
 
 
 ### torch.nn 神经网络
@@ -1176,7 +1342,54 @@ with t.no_grad():
 - 一个nn.Module包含各个层和一个forward(input)方法，该方法返回output
 - nn.Module子类的函数必须在构造函数中执行父类的构造函数
 - torch.nn只支持mini-batches，不支持一次只输入一个样本，即一次必须是一个btach。如果只想输入一个样本，则用input.unsqueeze(0)将batch_size设为1。例如，nn.Conv2d的输入必须是4维的，形如nSamples*nChannels*Height*Width，可将nSamles设置为1，即 1*nChannels*Height*Width
+- 在实际使用中，最常见的做法是继承nn.Module,撰写自己的网络层
+- 自定义层必须继承nn.Module，并且包含__init__构造函数和forward函数
+- forward函数需要return吗？需要。需要return output。
+- forward函数好像只有定义，后面训练没有具体写到？predict_y = model(train_x)其实就是调用了model中的forward方法
+- __init__构造函数中，必须调用nn.Module的构造函数，即`super(MyNet, self).__init__()` 或 `nn.Module.__init__(self)`。子类可以在继承父类方法的同时，对方法进行重构。这样一来，子类的方法既包含父类方法的特性，同时也包含子类自己的特性。在单类继承中，super()函数用于指向要继承的父类，且不需要显式的写出父类名称。Python3.x 和 Python2.x 的一个区别是: Python 3 可以使用直接使用 super().xxx 代替 super(MyNet, self).xxx。
+```
+nn.Module.__init__(self)
+super(MyNet, self).__init__()       # python2写法
+super().__init__()                  # python3写法
+```
+ - forward函数实现前向传播
+ - 无须写反向传播函数，因其前向传播都是对varible进行操作，nn.Module能够利用autograd自动实现反向传播
+ - Conv2d:Conv2d的输入必须是四维的，(batchsize,channels,height,weight)
+ - 注意，conv2d中的padding=1，代表图片周围加一层，也就是行列左右各增加1，也就是行列均增加2
+ - 注意，transforms.Compose([xx,xx,xx]), nn.Squential(xx, xx, xx),一个要加中括号，一个不用
+```
+torch.nn.Conv2d(in_channels, out_channels, kernel_size(int or tuple), stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
+```
+ - MaxPool2d:
+```
+torch.nn.MaxPool2d(kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False)
+```
+ - BatchNorm2d:批规范化层，分为1D,2D,3D。
+```
+torch.nn.BatchNorm2d(num_features, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+```
+ - dropout2d:用来防止过拟合，同样分为1D,2D,3D。
+ - nn.Linear:Y=X*AT(转置)+b, 假设m = nn.Linear(20, 30), 如果将x维度=(128,20),得到的y维度=(128，30)
+```
+torch.nn.Linear(in_features, out_features, bias=True)
+```
+```
+class MyNet(nn.Module):
+    def __init__(self):
+        nn.Module.__init__(self)
+        self.cnn = nn.Sequential(
+            nn.Conv2d(3,64,3,1),      
+            nn.MaxPool2d(2,2,0),
+        )
+        self.fc = nn.Sequential(
+            nn.Linear(),
+            nn.ReLU()
+        )
 
+    def forward(self, x):
+        out = self.cnn(x)
+        out = self.fc(out)
+```
 
 #### 神经网络的典型训练过程
 ##### 老师版
@@ -1195,8 +1408,32 @@ with t.no_grad():
 - Step5：评估模型
 
 #### nn.functional & nn.Module
-- nn.Module和nn.functional的主要区别在于，用nn.Moduel实现的layers是一个特殊的类，都是由class Layer(nn.Module)定义，会自动提取可学戏的参数。而nn.functional中的函数更像是纯函数，由def function(input)定义。
-- 什么时候用nn.Module，什么时候用nn.functional?如果模型有可学习的参数，最好用nn.Module,否则既可以用nn.Module也可以用nn.functional,二者在性能上没有太大差异。由于激活函数、池化等层没有可学戏参数，可以使用对应的functional函数代替，而卷积、全连接等具有可学习参数的网络建议使用nn.Module
+- nn中的大多数layer在functional中都有一个与之相对应的函数。
+- nn.Module和nn.functional的主要区别在于，用nn.Moduel实现的layers是一个特殊的类，都是由class Layer(nn.Module)定义，会自动提取可学习的参数。而nn.functional中的函数更像是纯函数，由def function(input)定义。
+- 什么时候用nn.Module，什么时候用nn.functional?如果模型有可学习的参数，最好用nn.Module,否则既可以用nn.Module也可以用nn.functional,二者在性能上没有太大差异。由于激活函数、池化等层没有可学习参数，可以使用对应的functional函数代替，而卷积、全连接等具有可学习参数的网络建议使用nn.Module
+- 虽然dropout操作也没有可学习的参数，但建议还是使用nn.Dropout而不是nn.functional.dropout,因为dropout在训练和测试两个阶段的行为有所差别，使用nn.Module对象能够通过model.eval操作加以区分
+- 不具备可学习参数的层（激活层、池化层等），将它们用函数代替，这样可以不放置在构造函数__init__中。
+- 激活函数到底应该写在init里面，还是写在forwad函数里面？不具备可学习参数的层，如激活层，池化层，将它们用函数代替，即用nn.functional中的方法，这样可以不用9放置在构造函数__init__中。如果是nn.Module,就要放在__init__构造函数里面。
+```
+from torch.nn import functional as F
+class MyNet(nn.Module):
+def __init__(self):
+    super(MyNet, self).__init__()
+    self.conv1 = nn.conv2d(3, 64, 3)
+    self.conv2 = nn.conv2d(64, 16, 3)
+    self.fc1 = nn.Linear(16*5*5, 120)
+    self.fc2 = nn.Linear(120, 84)
+    self.fc3 = nn.Linear(84, 10)
+
+def forward(self, x):
+    x = F.pool(F.relu(self.conv1(x)), 2)
+    x = F.pool(F.relu(self.conv2(x)), 2)
+    x = x.view(-1,16*5*5)
+    x = F.relu(self.fc1(x))
+    x = F.relu(self.fc2(x))
+    x = self.fc3(x)
+    return x
+```
 
 
 #### 定义网络模型
@@ -1208,7 +1445,7 @@ with t.no_grad():
 - 所以，当我们调用loss.backward()时，整张计算图都会根据loss进行微分，而且图中所有设置为requires_grad=True的张量将会拥有一个随着梯度累积的.grad张量
 - forward()函数中，input首先经过卷积层，此时的输出x是包含batchsize维度为4的tensor，即(batchsize，channels，x，y)，x.size(0)指batchsize的值
 - forward函数的输入和输出都是Variable，只有Variable才具有自动求导功能，Tensor是没有的，所以在输入时，需要把Tensor封装成Variable
-
+- 注意，forward方法中，卷积层的输出需要flatten，否则维度不对了。而且，cnn的输出维度是（batch_size,channels,w,h)
 ```
 import torch.nn as nn
 import torch.functional as F
@@ -1243,6 +1480,7 @@ net = Net()
 print(net)
 ```
 
+
 #### 网络中的可学习参数
 - 把网络中具有可学习参数的层放在构造函数__init__()中，如果某一层，如激活函数ReLU，不具有可学习参数，则既可以放在构造函数中，也可以不放
 - 网络的可学习参数通过net.parameters()返回，net.named_parameters()可同时返回可学习的参数及名称
@@ -1267,9 +1505,23 @@ import torch.nn as nn
 criterion = nn.MSEloss()
 loss = criterion(output, target)
 ```
+- 损失函数：在深度学习中要用到各种各样的损失函数，这些损失函数可以看作是一种特殊的layer，Pytorch也将这些损失函数定义为nn.Module的子类。然而在实际使用中，通常将这些损失函数专门提取出来，作为独立的一部分。
+- 注意，criterion(predict_y, label)，注意参数的顺序，不可以反过来
+
 
 
 #### torch.optim 优化器：更新权重 
+- 优化器：在反向传播计算完所有参数的梯度后，还需要使用优化方法更新网络的权重和参数。Pytorch将深度学习常用的优化方法全部封装在torch.optim中，其设计十分灵活，能够很方便的扩展成自定义的优化方法。torch.optim中实现了深度学习中绝对多数的优化方法，例如RMSProp、Adam、SGD等。所有的优化方法，包括自定义和非自定义的优化方法，都是继承基类(父类）optim.Optimizer,并实现了自己的优化步骤。
+- 注意，grad在反向传播的过程中是累加的，这意味着每次运行反向传播，梯度都会累加之前的梯度，所以反向传播前需要把梯度清零
+```
+import torch.optim as optim
+# 新建一个参数，指定要调整的参数和学习率
+optimizer = optim.SGD(MyNet.parameters(), lr=0.01)
+
+```
+- MyNet.parameters()：返回网络的可学习参数
+- MyNet.named_parameters()：同时返回可学习的参数及名称
+- optimizer.step()：更新参数
 - Pytorch将常用的深度学习优化方法全部封装在torch.optim中，其设计十分灵活，能够很方便的扩展成自定义的优化方法。所有的优化方法都是继承基类optim.Optimizer,并实现了自己的优化步骤
 - 权重更新规则是随机梯度下降（SGD）：weight = weight - learning_rate * gradient
 - 可以使用简单的python代码实现这个规则：
@@ -1298,7 +1550,7 @@ optimizer.step()
 #### 训练网络
 - 多进程需要在main函数中运行，因此当num_workers设定大于1时，需要在训练时加上if __name__=='__main__':
 - enumerate()函数：enumerate() 函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中。返回 enumerate(枚举) 对象。enumerate(sequence, [start=0]) ，第二个参数表示开始的索引
-- 
+- model.train()和model.eval()如果模型中有BN层(Batch Normalization）和Dropout，需要在训练时添加model.train()。model.train()是保证BN层能够用到每一批数据的均值和方差。对于Dropout，model.train()是随机取一部分网络连接来训练更新参数。如果模型中有BN层(Batch Normalization）和Dropout，在测试时添加model.eval()。model.eval()是保证BN层能够用全部训练数据的均值和方差，即测试过程中要保证BN层的均值和方差不变。对于Dropout，model.eval()是利用到了所有网络连接，即不进行随机舍弃神经元。
 ```
 for epoch in range(2):
     running_loss = 0.0
@@ -1321,6 +1573,29 @@ for epoch in range(2):
             running_loss = 0.0
 print("Finish Training!")
 ```
+
+#### GPU加速：cuda
+- 在Pytorch中，Tensor、nn.Module、Variable(包括Parameter)均分别为CPU和GPU两个版本
+- Tensor、nn.Module、Variable(包括Parameter)都带有.cuda方法，调用.cuda方法即可将其转为对应的GPU对象
+- 注意，tensor.cuda和variable.cuda都会返回一个新对象，这个新对象的数据已经转移至GPU，而原来的tensor、variable的数据还在原来的CPU设备上。
+- module.cuda会将所有数据迁移至GPU，并返回自己。所以module.cuda和module = modlue.cuda的效果相同
+- variable和nn.Module在GPU和CPU之间的转换，本质上还是利用了Tensor在CPU和GPU的转换。
+- nn.Module的cuda方法是将nn.Module下的所有parameter（包括子Module的parameter）都转移至GPU。
+- 为什么将数据转移至GPU的方法叫做.cuda而不是.gpu呢？因为GPU的编程接口采用CUDA，而目前并不是所有的GPU都支持cuda，只有部分NVIDIA的GPU才支持。Pytorch未来可能会支持AMD的GPU，而AMD的GPU编程接口采用OpenCL，因此Pytorch还预留着.cl方法，用于支持AMD的GPU
+```
+new_tensor = tensor.cuda(0)    # 返回了new_tensor，保存在第0块GPU上，tensor还是在GPU上。
+new_tensor = tensor.cuda()     # 如果不写参数，则默认使用第0块。
+```
+- 大部分的损失函数也属于nn.Module，但在使用GPU时，很多时候我们都忘记使用它的.cuda方法，在大多数情况下不会报错，因为损失函数本身没有可以学习的参数。但在某些情况下会出现问题，为了保险期间同时也为了代码更规范，应记得调用criterion.cuda
+```
+criterion = nn.CrossEntropyLoss()
+criterion.cuda()
+loss = criterion(predict_y, label)
+```
+
+#### 验证
+- 验证相对来说比较简单，但要注意需将模型置于验证模式model.eval(), 验证完成后还需要将其置灰训练模式model.train()。这两句代码会影响BatchNorm和Dropout等层的运行模式。
+
 
 
 ### 示例：训练一个图像分类器：CIFAR-10
@@ -1410,7 +1685,9 @@ print("Finish Training!")
 
 
 ## math 模块
-- math.floor(x) 返回数字x的下舍整数
+- math.floor(x) 返回数字x的下舍整数，即向下取整
+- math.round(x) 四舍五入
+- math.ceil(x) 向上取整
 
 
 
@@ -1421,7 +1698,8 @@ print("Finish Training!")
 - next(f): 跳过一行，返回值也是跳过一行的f，f本身也是跳过一行了
 - f.readline()：无参数返回表头，有参数，参数的大小表示字节数
 - format用法:相对基本格式化输出采用‘%’的方法，format()功能更强大，该函数把字符串当成一个模板，通过传入的参数进行格式化，并且使用大括号‘{}’作为特殊字符代替‘%’.1、基本用法:（1）不带编号，即“{}”,（2）带数字编号，可调换顺序，即“{1}”、“{2}”,（3）带关键字，即“{a}”、“{tom}”
-
+- list.append(element), 列表中增加一个元素，例如 fruit.append('apple')
+- zip():zip() 函数用于将可迭代的对象作为参数，将对象中对应的元素打包成一个个元组，然后返回由这些元组组成的列表。如果各个迭代器的元素个数不一致，则返回列表长度与最短的对象相同，利用 * 号操作符，可以将元组解压为列表。
 
 
 ## Q&A
@@ -1478,22 +1756,196 @@ Metric函数：metrics模块实现了一些函数，用来评估预测误差。
 6. 定义损失函数
 
 7. 找出最小化损失函数的解：梯度下降
+- w和b可以初始化为0吗？可以，因为第一个样本丢进模型虽然预测结果为0，但是由损失函数算出来的梯度取决于x，因此梯度算出来不为0，因此从第二个样本开始就预测结果就不为0了。但是神经网络不行，因为神经网络具有隐藏层，为什么？等后面做神经网络的作业再研究
 - b是怎么处理的？不仅对w求梯度，也对b求梯度，但注意对w和对b求微分，w后面*x，b后面*1
 - x_train_data本来维度是[12*20*15, 18*9], 因为b的原因，应该再加一维1（因为b的系数是1），也可以另外重新定义，不在x_train_data上直接拓展
 - adagrad中的gradient的平方和，是w和b一起的gradient的平方和，还是w和b分开算？每个梯度都有自己的adagrad，本题中有18*9+1个梯度，因此也有18*9+1个adagrad
 - 可以用adagrad
 - eps, 防止除以0
 - 注意是y' - y,若写成y-y'(y'=wx+b即预测值，y是真实值),那么取微分后应该还要*-1，因为是对w和b求微分
+- 保存最后的w和b的系数
+```
+np.save('./model/w_b.npy', w)
+w = np.load('./model/w_b.npy')
+```
 
-8. 测试
+
+1. 测试
 - 注意表格是否有表头
+
+9. 保存结果
+- python 使用 with open() as 读写文件 https://blog.csdn.net/xrinosvip/article/details/82019844
+- newline参数的意思？好绕。。
+```
+import csv
+with open('mysubmit.csv', mode='w', newline='') as submit_file:
+    csv_writer = csv.writer(submit_file)
+    header = ['id', 'value']
+    csv_writer.writerow(header)
+    for i in range(240):
+        row = ['id_' + str(i), predict_test_data[i]]
+        csv_writer.writerow(row)
+```
 
 ## Q&A
 1. 标准化后，整体的loss反而增加了？为什么？
-- flatten和reshape(1,-1)的区别
-- w和b可以初始化为0吗？
-- 如何采用验证验证集
-- 保存w和b的系数，生成numpy文件
-- 
+1. 如何使用验证集？
+
+
+# Homework2: Classification - Logistic Regrassion
+
+## 流程及注意事项
+
+1. 读取数据
+- 我用的homework1读取数据的方法（pandas），但是第二个作业用的是另一种读取csv文件的方法（with open as)，也可学习参考
+- 记得从dataframe转换成numpy
+- 数据类型转换成float
+
+2. 数据处理
+- 标准化：对每一列，即每一个feature进行标准化，(x-mean)/(std+eps)
+
+3. 训练模型
+- shuffle:训练、验证、测试都要shuffle吗？训练要吧,验证和测试应该不用。为什么要shuffle？原始的数据，在样本均衡的情况下可能是按照某种顺序进行排列，如前半部分为某一类别的数据，后半部分为另一类别的数据。但经过打乱之后数据的排列就会拥有一定的随机性，在顺序读取的时候下一次得到的样本为任何一类型的数据的可能性相同。如何shuffle？作业范例中采用这样的方式，不是完全明白，可以再理解理解。shuffle作业范例中是在训练中shuffle的，我是在数据处理时shuffle的，现在想想应该是要在每一轮的训练中，这样每次训练新一轮重新shuffle一遍更好。
+```
+def _shuffle(X, Y):
+    randomsize = np.arange(X.shape[0])
+    np.random.shuffle(randomsize)
+    return (X[randomsize], Y[randomsize])             # 这里为什么要加小括号？
+```
+- mini-batch：每一轮都会过一遍全部的训练数据，在每一轮中，一个batch一个batch进行梯度下降。为什么要用batch？当数据集比较大的时候，一次性将所有样本输入去计算一次cost存储会吃不消，因此会采用一次输入一定量的样本来进行训练。mini-batch属于随机梯度下降和批量梯度下降的折中。
+- b的处理：计算b的梯度是，记得要乘上全是1的矩阵，因为每个样本对应的b的系数都是1
+- lr的处理：使用adagrad来调节lr，作业范例中使用的是step来调节。
+- 验证集：验证集可以计算acc
+- acc：acc如何计算？我用的方法和作业范例使用的方法不一样。作业范例的方法如下。既可以计算训练集的acc，也可以计算验证集的acc。每一轮遍历完一遍所有数据就输出一次acc。
+```
+def _accuracy(Y_pred, Y_label):
+    # This function calculates prediction accuracy
+    acc = 1 - np.mean(np.abs(Y_pred - Y_label))
+    return acc
+```
+- 为什么会溢出？np.log(x)和np.exp(z)需要考虑溢出的状况。如何防止溢出？看以下作业范例，使用np.clip(x, min, max)
+```
+def _sigmoid(z):
+    # Sigmoid function can be used to calculate probability.
+    # To avoid overflow, minimum/maximum output value is set.
+    return np.clip(1 / (1.0 + np.exp(-z)), 1e-8, 1 - (1e-8))
+```
+
+4. 画图
+- 要先保存再show，否则保存的图片是空白的。为什么？在 plt.show() 后调用了 plt.savefig() ，在 plt.show() 后实际上已经创建了一个新的空白的图片（坐标轴），这时候你再 plt.savefig() 就会保存这个新生成的空白图片。
+
+5. 测试并保存结果
+- 将算出的test_y转换成dataframe，然后再存储成csv
+
+## 我的遗漏考虑
+1. 标准化
+2. shuffle
+3. mini-batch
+4. 尽量使用adagrad
+5. 结果画图呈现
+
+## Q&A
+1. 给的训练数据和测试数据都是经过处理的，但是如何处理这些数据我还不会。
+- 为什么要balance positve 和 negative?
+- 如何处理连续数据？
+- 如何处理离散数据？
+- 哪些attribute是unnecessary的attribute？
+2. 梯度的求和到底是哪些项的和？懵逼
+
+
+# Homework2: Classification - Logistic Regrassion
+
+## 流程及注意事项
+
+1. 读取数据
+
+2. 处理数据：标准化
+- 概率生成模型不需要shuffle
+
+3. 划分数据：划分成两个类别
+```
+train_0 = np.array([x for x, y in zip(train_x,raw_train_y) if y == 0])
+train_1 = np.array([x for x, y in zip(train_x,raw_train_y) if y == 1])
+```
+
+4. 计算mean0、mean1、conv0、conv1、shared_conv
+- 如何求每一类别的平均数？data是x*510,其中510是features，因此mean的维度是1*510，conv的维度是510*510
+- shared_conv 按照两个类别的比例计算   shared_conv = class0比例*conv0 + class1比例*conv1
+- 如何计算协方差矩阵？numpy有自带的协方差矩阵计算，但是我试了下，样本太大，计算不了，内存不够，没办法计算这么大的矩阵。作业范例中是自己算的，不是调用numpy函数，但我还不太明白是怎么算的
+- 通过训练集可以求出mean0、mean1、conv0、conv1、shared_conv，就可以直接求出w和b，不需要训练了
+
+
+1. 计算w和b，利用mean0、mean1、shared_conv
+- 计算w和b会用到shared_conv的逆矩阵。求逆矩阵可以使用np.linalg.inv(a),但是协方差矩阵shared_conv不一定可以求逆矩阵，若不能求逆矩阵，就求伪逆。shared_conv很可能是不可逆矩阵（奇异矩阵），因此要用SVD。Since covariance matrix may be nearly singular, np.linalg.inv() may give a large numerical error.Via SVD decomposition, one can get matrix inverse efficiently and accurately.
+- 奇异值分解SVD：np.linalg.svd(a, full_matrices=True, compute_uv=True) 。a : 是一个形如(M,N)矩阵。full_matrices：的取值是为0或者1，默认值为1，这时u的大小为(M,M)，v的大小为(N,N) 。否则u的大小为(M,K)，v的大小为(K,N) ，K=min(M,N)compute_uv：取值是为0或者1，默认值为1，表示计算u,s,v。为0的时候只计算s。
+- singular matrix是奇异矩阵的意思。奇异矩阵是不可逆矩阵。 设A为n阶方阵，若存在另一n阶方阵B，使得AB=BA=I，则称A为非奇异矩阵，若不存在，则为奇异矩阵。 当exogenous variable 中虚拟变量过多，可能产生singular matrix或near singular matrix，表示这些变量间存在较大相关性。
+
+6. 测试集
+- 直接用求出的w和b计算predic_y即可得到结果
+
+## Q&A
+
+2. 概率生成模型不需要验证集？为什么？因為 generative model 有可解析的最佳解，因此不必使用到验证集
+3. np.dot()不能连续三个矩阵相乘？不行的，2个2个写
+4. 如何计算协方差矩阵？numpy有自带的协方差矩阵计算，但是我试了下，样本太大，计算不了，内存不够，没办法计算这么大的矩阵。作业范例中是自己算的，不是调用numpy函数，但我还不太明白是怎么算的
+
+
+# Homework3
+
+1. 自定义Dataset
+
+
+2. 处理数据
+
+
+3. 加载数据Dataloader
+
+
+4. 定义神经网络
+
+
+5. 定义损失函数
+
+
+6. 定义优化器
+
+
+7. 训练数据
+
+
+## Q&A
+1. 为什么自定义Dataset的init函数不需要继承父类Dataset的__init__()函数？
+2. 梯度清零。为什么要梯度要设计成累加的呢？这样才多了个梯度清零的动作。没弄懂里面的数学算式。
+5. 最后一层神经元还要再加ReLU?还是加Softmax激活函数？我看作业范例里面最后一层全连接层并没有加激活函数？
+7.  Dropout/BatchNorm
+
+
+# Homework4
+
+## gensim
+
+- 一款开源的python第三方工具包，用于从原始的非结构化的文本中，无监督地学习到文本隐层的主题向量表达。主要用于主题建模和文档相似性处理，它支持包括TF-IDF，LSA，LDA，和word2vec在内的多种主题模型算法。Gensim在诸如获取单词的词向量等任务中非常有用。
+- 使用Gensim训练Word2vec的训练步骤：
+1. 将语料库预处理：一行一个文档或句子，将文档或句子分词（以空格分割，英文可以不用分词，英文单词之间已经由空格分割，中文语料需要使用分词工具进行分词，常见的分词工具有StandNLP、ICTCLAS、Ansj、FudanNLP、HanLP、结巴分词等）；
+2. 将原始的训练语料转化成一个sentence的迭代器，每一次迭代返回的sentence是一个word（utf8格式）的列表。可以使用Gensim中word2vec.py中的LineSentence()方法实现；
+3. 将上面处理的结果输入Gensim内建的word2vec对象进行训练即可：
+```
+from gensim.models import word2vec
+
+word2vec.Word2Vec(sentences=None, corpus_file=None, size=100, alpha=0.025, window=5, min_count=5, max_vocab_size=None, sample=0.001, seed=1, workers=3, min_alpha=0.0001, sg=0, hs=0, negative=5, ns_exponent=0.75, cbow_mean=1, hashfxn=hash, iter=5, null_word=0, trim_rule=None, sorted_vocab=1, batch_words=MAX_WORDS_IN_BATCH, compute_loss=False, callbacks=(), max_final_vocab=None)
+```
+- sentences：可以是一个list，对于大语料集，建议使用BrownCorpus,Text8Corpus或lineSentence构建。
+- size：是指词向量的维度，默认为100。这个维度的取值一般与我们的语料的大小相关，如果是不大的语料，比如小于100M的文本语料，则使用默认值一般就可以了。如果是超大的语料，建议增大维度。大的size需要更多的训练数据,但是效果会更好. 推荐值为几十到几百。
+- window：窗口大小，即词向量上下文最大距离，这个参数在我们的算法原理篇中标记为c。window越大，则和某一词较远的词也会产生上下文关系。默认值为5。在实际使用中，可以根据实际的需求来动态调整这个window的大小。如果是小语料则这个值可以设的更小。对于一般的语料这个值推荐在[5,10]之间。个人理解应该是某一个中心词可能与前后多个词相关，也有的词在一句话中可能只与少量词相关（如短文本可能只与其紧邻词相关）。
+- min_count: 需要计算词向量的最小词频。这个值可以去掉一些很生僻的低频词，默认是5。如果是小语料，可以调低这个值。可以对字典做截断， 词频少于min_count次数的单词会被丢弃掉。
+- negative：即使用Negative Sampling时负采样的个数，默认是5。推荐在[3,10]之间。这个参数在我们的算法原理篇中标记为neg。
+- cbow_mean: 仅用于CBOW在做投影的时候，为0，则算法中的为上下文的词向量之和，为1则为上下文的词向量的平均值。在我们的原理篇中，是按照词向量的平均值来描述的。个人比较喜欢用平均值来表示，默认值也是1，不推荐修改默认值。
+- iter: 随机梯度下降法中迭代的最大次数，默认是5。对于大语料，可以增大这个值。
+- alpha: 是初始的学习速率，在训练过程中会线性地递减到min_alpha。在随机梯度下降法中迭代的初始步长。算法原理篇中标记为η，默认是0.025。
+- min_alpha: 由于算法支持在迭代的过程中逐渐减小步长，min_alpha给出了最小的迭代步长值。随机梯度下降中每轮的迭代步长可以由iter，alpha, min_alpha一起得出。这部分由于不是word2vec算法的核心内容，因此在原理篇我们没有提到。对于大语料，需要对alpha, min_alpha,iter一起调参，来选择合适的三个值。
+- max_vocab_size: 设置词向量构建期间的RAM限制，设置成None则没有限制。
+- sample: 高频词汇的随机降采样的配置阈值，默认为1e-3，范围是(0,1e-5)。
+- seed：用于随机数发生器。与初始化词向量有关。
+- workers：用于控制训练的并行数。
 
 
