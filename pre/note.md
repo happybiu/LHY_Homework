@@ -72,6 +72,7 @@
     - [官方文档/官方手册](#官方文档官方手册)
     - [Tensor 张量](#tensor-张量)
       - [Tensor(张量)创建](#tensor张量创建)
+      - [tensor 拼接](#tensor-拼接)
       - [获取tensor的size](#获取tensor的size)
       - [运算：加减乘除、矩阵乘法、矩阵求逆](#运算加减乘除矩阵乘法矩阵求逆)
       - [改变tensor的维度和大小](#改变tensor的维度和大小)
@@ -90,6 +91,7 @@
       - [torchvision](#torchvision)
       - [torch.utils.data.DataLoader](#torchutilsdatadataloader)
     - [torch.nn 神经网络](#torchnn-神经网络)
+      - [torch.nn.init](#torchnninit)
       - [神经网络的典型训练过程](#神经网络的典型训练过程)
         - [老师版](#老师版)
         - [自己版](#自己版)
@@ -104,21 +106,32 @@
     - [示例：训练一个图像分类器：CIFAR-10](#示例训练一个图像分类器cifar-10)
   - [math 模块](#math-模块)
   - [python语法](#python语法)
+  - [迭代器](#迭代器)
   - [Q&A](#qa)
+- [python 工程目录组织/项目完整开发流程](#python-工程目录组织项目完整开发流程)
+  - [网上找的](#网上找的)
+  - [pytorch书上的猫狗实战](#pytorch书上的猫狗实战)
+- [环境变量/工作目录/当前路径](#环境变量工作目录当前路径)
+  - [Q&A](#qa-1)
 - [Homework1: Regression](#homework1-regression)
   - [流程及注意事项](#流程及注意事项)
-  - [Q&A](#qa-1)
+  - [Q&A](#qa-2)
 - [Homework2: Classification - Logistic Regrassion](#homework2-classification---logistic-regrassion)
   - [流程及注意事项](#流程及注意事项-1)
   - [我的遗漏考虑](#我的遗漏考虑)
-  - [Q&A](#qa-2)
+  - [Q&A](#qa-3)
 - [Homework2: Classification - Logistic Regrassion](#homework2-classification---logistic-regrassion-1)
   - [流程及注意事项](#流程及注意事项-2)
-  - [Q&A](#qa-3)
-- [Homework3](#homework3)
   - [Q&A](#qa-4)
-- [Homework4](#homework4)
-  - [gensim](#gensim)
+- [Homework3 - CNN](#homework3---cnn)
+  - [Q&A](#qa-5)
+- [Homework4 - RNN](#homework4---rnn)
+  - [gensim.models.word2vec](#gensimmodelsword2vec)
+  - [模型](#模型)
+    - [nn.LSTM():](#nnlstm)
+  - [流程及注意事项](#流程及注意事项-3)
+  - [注意事项](#注意事项)
+  - [Q&A](#qa-6)
 
 <!-- /TOC -->
 
@@ -970,10 +983,27 @@ print("d1:\n", d1)
 print("d2:\n", d2)
 ```
 
+#### tensor 拼接
+- torch.cat(inputs, dimension=0) 在给定维度上对输入的张量序列 seq 进行连接操作
+```
+tensor([[-0.1997, -0.6900,  0.7039],
+        [ 0.0268, -1.0140, -2.9764]])
+
+>>> torch.cat((x, x, x), 0)	# 在 0 维(纵向)进行拼接
+
+# 输出
+tensor([[-0.1997, -0.6900,  0.7039],
+        [ 0.0268, -1.0140, -2.9764],
+        [-0.1997, -0.6900,  0.7039],
+        [ 0.0268, -1.0140, -2.9764],
+        [-0.1997, -0.6900,  0.7039],
+        [ 0.0268, -1.0140, -2.9764]])
+```
+
 #### 获取tensor的size
 - 注意tensor的size和ndarray的size不一样
 - t.size()的返回值是tuple，所以它支持tuple类型的所有操作
-- 
+- tensor_x.size(0) 与  tensor_x.size()[0]  一样?
 ```
 import torch as t
 import numpy as np
@@ -984,7 +1014,6 @@ y = np.array([[1, 2, 3], [2, 3, 4]])
 print(x.size())                          # size()是函数，返回tensor的大小
 print(y.size)                            # size是属性，返回ndarray中的元素数量
 ```
-
 
 #### 运算：加减乘除、矩阵乘法、矩阵求逆
 - 注意：任何以_为结尾的操作都会用结果替换原变量，例如: x.copy_(), x.t_()
@@ -1065,6 +1094,25 @@ if t.cuda.is_available():
     z = z.to("cpu", t.double)
     print(z)
 ```
+- to(device) 和 .cuda的区别？两种写法都写一下比较一下。
+- to(device) 可以指定CPU 或者GPU, 而.cuda() 只能指定GPU
+
+```
+# .cuda()版本
+
+```
+```
+# to(device)版本
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+```
+- tensor.to(device):哪些参数要调到to(device)? 注意x, y, model都要to device
+```
+for i, (input,label) in enumerate(val_dataloader):
+    input = input.to(device)
+    label = label.to(device)
+
+model = model.to(device)
+```
 
 ### Autograd 自动求导机制
 - 深度学习算法本质上是通过反向传播求导数，Pytorch的Autograd模块实现了此功能。在Tensor上的所有操作，Autograd都能为它们自动提供微分，避免手动计算导数的复杂过程
@@ -1073,7 +1121,10 @@ if t.cuda.is_available():
 - torch.Tensor中若设置require_grad为True，那么将会追踪所有对于该张量的操作
 - 当完成计算后通过调用.backward()，将自动计算所有的梯度，这个tensor的所有梯度将会自动积累到.grad属性
 - 如果tensor是一个标量，则不需要为backward()指定任何参数，否则，需要制定一个gradient参数来匹配张量的形状
-- 要阻止张量跟踪历史记录，可以调用：1. .detach()方法 2. 将代码块包装在with_torch.no_grad()中，在评估模型时特别有用，因为模型可能具有requires_grad = True的可训练参数，但是我们不需要梯度计算
+- 要阻止张量跟踪历史记录，可以调用：1. .detach()方法 2. 将代码块包装在with torch.no_grad():中，在评估模型时特别有用，因为模型可能具有requires_grad = True的可训练参数，但是我们不需要梯度计算
+```
+报错 Can't call numpy() on Tensor that requires grad. Use tensor.detach().numpy() instead
+```
 
 
 #### autograd.Variable
@@ -1161,6 +1212,8 @@ print(x.grad)
 
 #### with torch.no_grad()
 - 如果requires_grad=True但是你又不希望进行autograd的计算，那么可以将变量包裹在with torch.no_grad()中
+- 在使用pytorch时，并不是所有的操作都需要进行计算图的生成（计算过程的构建，以便梯度反向传播等操作）。而对于tensor的计算操作，默认是要进行计算图的构建的，在这种情况下，可以使用 with torch.no_grad():，强制之后的内容不进行计算图构建。
+- 
 ```
 import torch as t
 
@@ -1383,13 +1436,28 @@ class MyNet(nn.Module):
         )
         self.fc = nn.Sequential(
             nn.Linear(),
-            nn.ReLU()
+            nn.ReLU() 
         )
 
     def forward(self, x):
         out = self.cnn(x)
         out = self.fc(out)
 ```
+
+
+#### torch.nn.init
+- 均匀分布 U(a, b)
+```
+tensor = t.empty(2, 3)
+torch.nn.init.uniform_(tensor, a=0, b=1)
+```
+- 正态分布 N(mean,std)
+```
+torch.nn.init.normal_(tensor, mean=0, std=1)
+```
+
+
+
 
 #### 神经网络的典型训练过程
 ##### 老师版
@@ -1548,7 +1616,7 @@ optimizer.step()
 
 
 #### 训练网络
-- 多进程需要在main函数中运行，因此当num_workers设定大于1时，需要在训练时加上if __name__=='__main__':
+- 多进程需要在main函数中运行，因此当num_workers设定大于1时，需要在训练时加上`if __name__=='__main__'`:
 - enumerate()函数：enumerate() 函数用于将一个可遍历的数据对象(如列表、元组或字符串)组合为一个索引序列，同时列出数据和数据下标，一般用在 for 循环当中。返回 enumerate(枚举) 对象。enumerate(sequence, [start=0]) ，第二个参数表示开始的索引
 - model.train()和model.eval()如果模型中有BN层(Batch Normalization）和Dropout，需要在训练时添加model.train()。model.train()是保证BN层能够用到每一批数据的均值和方差。对于Dropout，model.train()是随机取一部分网络连接来训练更新参数。如果模型中有BN层(Batch Normalization）和Dropout，在测试时添加model.eval()。model.eval()是保证BN层能够用全部训练数据的均值和方差，即测试过程中要保证BN层的均值和方差不变。对于Dropout，model.eval()是利用到了所有网络连接，即不进行随机舍弃神经元。
 ```
@@ -1693,13 +1761,55 @@ print("Finish Training!")
 
 ## python语法
 - with open() as f:有一些任务，可能事先需要设置，事后做清理工作。如果不用with语句,一是可能忘记关闭文件句柄；二是文件读取数据发生异常，没有进行任何处理。这时候就是with一展身手的时候了。除了有更优雅的语法，with还可以很好的处理上下文环境产生的异常。
+- 默认文件访问模式为只读(r)
+```
+with open(path, 'r') as f:
+    pass
+```
 - a.strip():Python strip() 方法用于移除字符串头尾指定的字符（默认为空格或换行符）或字符序列。注意：该方法只能删除开头或是结尾的字符，不能删除中间部分的字符。返回移除字符串头尾指定的字符生成的新字符串。
+```
+a.strip('\n')
+```
 - a.split(): Python split() 通过指定分隔符对字符串进行切片，如果参数 num 有指定值，则分隔 num+1 个子字符串。返回分割后的字符串列表。
 - next(f): 跳过一行，返回值也是跳过一行的f，f本身也是跳过一行了
-- f.readline()：无参数返回表头，有参数，参数的大小表示字节数
+- f.readline()：readline() 方法用于从文件读取整行，包括 "\n" 字符。如果指定了一个非负数的参数，则返回指定大小的字节数，包括 "\n" 字符。
+- f.readlines() 方法用于读取所有行(直到结束符 EOF)并返回列表，该列表可以由 Python 的 for... in ... 结构进行处理。如果碰到结束符 EOF 则返回空字符串。
+```
+lines = f.readlines()
+for line in lines:
+    pass
+```
 - format用法:相对基本格式化输出采用‘%’的方法，format()功能更强大，该函数把字符串当成一个模板，通过传入的参数进行格式化，并且使用大括号‘{}’作为特殊字符代替‘%’.1、基本用法:（1）不带编号，即“{}”,（2）带数字编号，可调换顺序，即“{1}”、“{2}”,（3）带关键字，即“{a}”、“{tom}”
+```
+
+```
 - list.append(element), 列表中增加一个元素，例如 fruit.append('apple')
 - zip():zip() 函数用于将可迭代的对象作为参数，将对象中对应的元素打包成一个个元组，然后返回由这些元组组成的列表。如果各个迭代器的元素个数不一致，则返回列表长度与最短的对象相同，利用 * 号操作符，可以将元组解压为列表。
+
+
+## 迭代器
+- 迭代器是什么？迭代器有两个基本的方法：iter() 和 next()。
+```
+>>> list=[1,2,3,4]
+>>> it = iter(list)    # 创建迭代器对象
+>>> print (next(it))   # 输出迭代器的下一个元素
+1
+>>> print (next(it))
+2
+>>>
+```
+迭代器对象可以使用常规for语句进行遍历
+```
+list=[1,2,3,4]
+it = iter(list)    # 创建迭代器对象
+for x in it:
+    print (x, end=" ")
+```
+- 把一个类作为一个迭代器使用需要在类中实现两个方法 __iter__() 与 __next__()。如果你已经了解的面向对象编程，就知道类都有一个构造函数，Python 的构造函数为 __init__(), 它会在对象初始化的时候执行。
+  - `__iter__()` 方法返回一个特殊的迭代器对象， 这个迭代器对象实现了 `__next__()` 方法并通过 StopIteration 异常标识迭代的完成。
+  - `__next__()` 方法（Python 2 里是 next()）会返回下一个迭代器对象。
+
+
 
 
 ## Q&A
@@ -1731,6 +1841,111 @@ Metric函数：metrics模块实现了一些函数，用来评估预测误差。
 18. 为什么使用crossentropy？什么时候使用crossentropy？
 19. 为什么weight初始化为0，那不是没有了么？逻辑回归中可以初始化为0，why？回归中好像也可以，作业范例是初始化为0。神经网络中不行。好像是因为隐藏层。具体原因还没很明白，之后研究一下。
 
+# python 工程目录组织/项目完整开发流程
+## 网上找的
+- https://zhuanlan.zhihu.com/p/36221226
+```
+Foo/
+|-- bin/
+|   |-- foo
+|
+|-- foo/
+|   |-- tests/
+|   |   |-- __init__.py
+|   |   |-- test_main.py
+|   |
+|   |-- __init__.py
+|   |-- main.py
+|
+|-- docs/
+|   |-- conf.py
+|   |-- abc.rst
+|
+|-- setup.py
+|-- requirements.txt
+|-- README
+```
+- bin/: 存放项目的一些可执行文件，当然你可以起名script/之类的也行。
+- foo/: 存放项目的所有源代码。(1) 源代码中的所有模块、包都应该放在此目录。不要置于顶层目录。(2) 其子目录tests/存放单元测试代码； (3) 程序的入口最好命名为main.py。
+- docs/: 存放一些文档。
+- setup.py: 安装、部署、打包的脚本。
+- requirements.txt: 存放软件依赖的外部Python包列表。
+- README: 项目说明文件。
+
+## pytorch书上的猫狗实战
+- 程序文件的组织架构
+```
+checkpoints/
+data/
+    __init__.py
+    dataset.py
+    get_data.sh
+models/
+    __init__.py
+    AlexNet.py
+    BasicModule.py
+    ResNet34.py
+utils/
+    __init__.py
+    visualize.py
+config.py
+main.py
+requirements.txt
+README.md
+```
+- 可以看到，几乎每个文件夹下都有`__init__.py`，一个目录如果包含了__init__.py,那么它就变成了一个包。`__init__.py`可以为空，也可以定义为包的属性和方法，但其必须存在，其他程序才能从这个目录中导入相应的模块和函数
+```
+# main.py
+from data.dataset import DogCat
+```
+- 如果是导入上级目录中的模块，需要加上`sys.path.append('模块所在目录eg:os.path.abspath()')`，sys.path 的作用是：当使用import语句导入模块时，解释器会搜索当前模块所在目录以及sys.path指定的路径去找需要import的模块
+```
+import sys
+sys.path.append('../')
+from fatherdirname import xxx
+```
+- 如果在`__init__.py`中写入`from .dataset import DogCat`,则在main.py中就可以直接写为：
+```
+# main.py
+from data import DogCat
+```
+- checkpoints/： 用于保存训练好的模型，可使程序在异常推出后仍能重新载入模型，恢复训练
+- data/: 数据相关操作，包括数据预处理、dataset实现等
+- models/: 模型定义，可以有多个模型，一个模型对应一个文件
+- utils/: 可能用到的工具函数
+- config.py: 配置文件，所有可配置的变量都集中在此，并提供默认值
+- main.py: 主文件，训练和测试程序的入口，可通过不同的命令来指定不同的操作和参数
+- requirements.txt: 程序依赖的第三方库
+- README.md: 提供程序的必要说明 
+
+
+# 环境变量/工作目录/当前路径
+- %systemroot%: 文件夹路径栏中输入%systemroot%即可打开windows的系统目录。
+- systemroot是系统的环境变量之一
+- 环境变量：指明操作系统的重要目录在哪里
+- 环境变量分为系统变量和用户变量。用户变量只针对当前系统登陆的用户。用户变量中也有PATH，作用和系统变量中的PATH差不多。如果打开我的用户变量， 发现里面有几条是和python有关的，它的作用是可以让我们随时随地的运行python
+- 为什么在运行对话框中输入cmd可以打开命令行，输入自己写的却不行？因为自己写的没有加入环境变量中，而cmd就在环境变量中。在运行对话框中输入cmd后，系统会尝试在PATH指明的目录中查找cmd这个程序
+- cwd：Current Working Directory
+- sys.path: sys.path是python的搜索模块的路径集，是一个list。可以在python 环境下使用sys.path.append(path)添加相关的路径，但在退出python环境后自己添加的路径就会自动消失
+```
+os.argv[0]                  # sys.argv[0]表示当前py文件本身路径
+os.getcwd()                 # os.getcwd() 返回当前工作目录,与当前py文件所在的位置无关
+sys.path                    # sys.path是python搜索模块时的路径集，是一个list
+os.environ['eg:PATH']       # os.environ 是一个字典，是环境变量的字典
+os.path.abspath('./')       # 当前工作目录，非当前py文件的路径
+os.path.abspath('../')       # 上级工作目录
+```
+- Python import 模块的搜索路径
+  - 在当前目录下搜索该模块
+  - 在环境变量 PYTHONPATH 中指定的路径列表中依次搜索
+  - 在 Python 安装路径的 lib 库中搜索
+- PYTHONPATH是Python搜索路径，默认我们import的模块都会从PYTHONPATH里面寻找
+- os.environ['PYTHONPATH'] = sys.path 。PYTHONPATH好像要自己设置，我没有设置，所以环境变量里没有PYTHONPATH这一项
+
+
+## Q&A
+1. 工作目录跟环境变量的关系是什么？
+2. 
 
 # Homework1: Regression
 
@@ -1890,7 +2105,7 @@ train_1 = np.array([x for x, y in zip(train_x,raw_train_y) if y == 1])
 4. 如何计算协方差矩阵？numpy有自带的协方差矩阵计算，但是我试了下，样本太大，计算不了，内存不够，没办法计算这么大的矩阵。作业范例中是自己算的，不是调用numpy函数，但我还不太明白是怎么算的
 
 
-# Homework3
+# Homework3 - CNN
 
 1. 自定义Dataset
 
@@ -1920,11 +2135,24 @@ train_1 = np.array([x for x, y in zip(train_x,raw_train_y) if y == 1])
 7.  Dropout/BatchNorm
 
 
-# Homework4
+# Homework4 - RNN
 
-## gensim
+## gensim.models.word2vec
+- 官方文档https://radimrehurek.com/gensim/models/word2vec.html
+- 一款开源的python第三方工具包，用于从原始的非结构化的文本中，无监督地学习到文本隐层的主题向量表达。
+- 主要用于主题建模和文档相似性处理，它支持包括TF-IDF，LSA，LDA，和word2vec在内的多种主题模型算法。
+- Gensim在诸如获取单词的词向量等任务中非常有用。
+- word2vec.LineSentence: Iterate over a file that contains sentences: one line = one sentence. Words must be already preprocessed and separated by whitespace.
+```
+from gensim.models import word2vec
 
-- 一款开源的python第三方工具包，用于从原始的非结构化的文本中，无监督地学习到文本隐层的主题向量表达。主要用于主题建模和文档相似性处理，它支持包括TF-IDF，LSA，LDA，和word2vec在内的多种主题模型算法。Gensim在诸如获取单词的词向量等任务中非常有用。
+word2vec.LineSentence(source, max_sentence_length=10000, limit=None)
+```
+```
+sentences = LineSentence(source = 'filepath')
+for sentence in sentences:
+    pass
+```
 - 使用Gensim训练Word2vec的训练步骤：
 1. 将语料库预处理：一行一个文档或句子，将文档或句子分词（以空格分割，英文可以不用分词，英文单词之间已经由空格分割，中文语料需要使用分词工具进行分词，常见的分词工具有StandNLP、ICTCLAS、Ansj、FudanNLP、HanLP、结巴分词等）；
 2. 将原始的训练语料转化成一个sentence的迭代器，每一次迭代返回的sentence是一个word（utf8格式）的列表。可以使用Gensim中word2vec.py中的LineSentence()方法实现；
@@ -1947,5 +2175,101 @@ word2vec.Word2Vec(sentences=None, corpus_file=None, size=100, alpha=0.025, windo
 - sample: 高频词汇的随机降采样的配置阈值，默认为1e-3，范围是(0,1e-5)。
 - seed：用于随机数发生器。与初始化词向量有关。
 - workers：用于控制训练的并行数。
+```
+# 模型保存
+model.save('filepath.model')
+# 模型加载
+model.load('filemath.model')
+```
+- If you save the model you can continue training it later
+```
+model = Word2Vec.load("word2vec.model")
+model.train([["hello", "world"]], total_examples=1, epochs=1)
+```
+- The trained word vectors are stored in a KeyedVectors instance, as model.wv
+```
+# get numpy vector of a word
+vector = model.wv['he']     
+```
+- The reason for separating the trained vectors into KeyedVectors is that if you don’t need the full model state any more (don’t need to continue training), its state can discarded, keeping just the vectors and their keys proper.This results in a much smaller and faster object that can be mmapped for lightning fast loading and sharing the vectors in RAM between processes:
+
+## 模型
+
+- numbedding():
+- 一个简单的查找表（lookup table），存储固定字典和大小的词嵌入。此模块通常用于存储单词嵌入并使用索引检索它们(类似数组)。模块的输入是一个索引列表，输出是相应的词嵌入。
+- num_embeddings: 词嵌入字典大小，即一个字典里要有多少个词。
+- embedding_dim: 每个词嵌入向量的大小
+- pytorch的nn.Embedding()是可以自动学习每个词向量对应的w权重的
+
+```
+embedding = nn.Embedding(10, 3)    # 字典里10个词，每个词是3维
+```
+
+### nn.LSTM():
+- input_size ：输入的维度,就是你输入x的向量大小。输入数据的特征维数，通常就是embedding_dim(词向量的维度)
+- hidden_size：h的维度。即隐藏层节点的个数
+- num_layers：堆叠LSTM的层数，默认值为1。
+- bias：偏置 ，默认值：True
+- batch_first： 如果是True，则input为(batch, seq, input_size)。默认值为：False（seq_len, batch, input_size）
+- bidirectional ：是否双向传播，默认值为False
+```
+# 输入的每个词的维度有100，hidden_layer的维度16
+lstm = nn.LSTM(100,16,num_layers=2)
+```
+- 输入数据：input,(h_0,c_0)。 h_0,c_0如果不提供，那么默认是０。
+- 输出数据包括output,(h_n,c_n)。
+- output[-1]与h_n是相等的，因为output[-1]包含的正是batch_size个句子中每一个句子的最后一个单词的隐藏状态
+- 注意LSTM中的隐藏状态其实就是输出，cell state细胞状态才是LSTM中一直隐藏的，记录着信息
 
 
+## 流程及注意事项
+
+1. 加载数据
+- 加载测试数据时的方法: 先用逗号分隔，然后取出[1:]（去掉开头的id)，再将后面的用''.join()连起来，然后用空格将每个单词分开
+```
+sentences = [''.join(line.strip('\n').split(',')[1:]) for line in lines]
+```
+- 注意test数据中要跳过表头，可以用next(f)。跳过一行，返回值也是跳过一行的f，f本身也是跳过一行了
+- 报错：UnicodeDecodeError: ‘gbk’ codec can’t decode byte 0xac in position 8: illegal multibyte sequence。解决办法：指定encoding = 'utf-8'。
+- gbk和utf-8的区别: GBK包含全部中文字符，UTF-8则包含全世界所有国家需要用到的字符。
+
+
+## 注意事项
+1. self.embedding.vector_size
+2. 模型保存
+```
+torch.save(model, './xxx.model')
+```
+
+5. PyTorch中的常用的tensor类型包括：32位浮点型torch.FloatTensor，64位浮点型torch.DoubleTensor，16位整型torch.ShortTensor，32位整型torch.IntTensor，64位整型torch.LongTensor。
+
+6. torch.int()将该tensor投射为int类型
+```
+newtensor = tensor.int()
+```
+
+
+## Q&A
+
+2. word2vec的model定义了对象之后并没有进行计算，是怎么训练的？定义对象后就是已经训练好的？
+3. 一定要先定义对象，才能用里面的方法。
+4. nn.BCELoss()和nn.CrossEntropyLoss()的区别？BCELoss是Binary CrossEntropyLoss的缩写，nn.BCELoss ()为二元交叉熵损失函数，只能解决二分类问题
+5. RNN训练的是哪些参数？
+6. 为什么要转换成longtensor?
+
+8. 验证集是在每个epoch下都做一次，而不是在所有epoch都做完，直接做验证集计算val的acc。
+9.  fix_embedding
+```
+self.embedding.weight = torch.nn.Parameter(embedding)
+# 是否將 embedding fix住，如果fix_embedding為False，在訓練過程中，embedding也會跟著被訓練
+self.embedding.weight.requires_grad = False if fix_embedding else True
+```
+10. main.py中写哪些？哪些写在方法里，哪些写在main.py里？
+11. config.py中一些具体参数的配置, 将原来写的修改一下，是的config.py可以直接配置重要参数
+12. acc画图？
+13. 每个.py文件中的 `if __name__=='__main'：` 中都是要写啥？
+14. 预测结果保存在哪里?
+15. 二分类的output是怎么处理的？我在作业中用的是多分类的办法，可参考猫狗实战书上的看看。作业范例上的也是和我做的方法不一样，可以看看。
+```
+报错 Can't call numpy() on Tensor that requires grad. Use tensor.detach().numpy() instead.
+```
